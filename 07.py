@@ -28,59 +28,6 @@ def preprocess(some_input):
             data.append((value, inputs))
     return data
 
-def evaluate(inputs, operations, output):
-    curr = inputs[0]
-    for val, op in zip(inputs[1:], operations):
-        if op == "+":
-            curr += val
-        elif op == "*":
-            curr *= val
-        elif op == "|":
-            curr = int(str(curr) + str(val))
-        else:
-            raise ValueError(f"Unknown operator {op}")
-        if curr > output:
-            return False
-    return curr == output
-
-def try_all(value, inputs):
-    operations = product("*+", repeat=len(inputs)-1)
-    for operation in operations:
-        if evaluate(inputs, operation, value):
-            return True, operation
-    return False, None
-
-def try_all2(value, inputs):
-    operations = product("*+|", repeat=len(inputs)-1)
-    for operation in operations:
-        if evaluate(inputs, operation, value):
-            return True, operation
-    return False, None
-
-@time_wrapper
-def task1(some_input):
-    data = preprocess(some_input)
-    sum_possible = 0
-    for value, inputs in data:
-        success, _ = try_all(value, inputs)
-        if success:
-            sum_possible += value
-    return sum_possible
-
-@time_wrapper
-def task2(some_input):
-    data = preprocess(some_input)
-    sum_possible = 0
-    for value, inputs in data:
-        success, _ = try_all(value, inputs)
-        if success:
-            sum_possible += value
-        else:
-            success, operations = try_all2(value, inputs)
-            if success:
-                sum_possible += value
-    return sum_possible
-
 def try_backwards(value, inputs):
     if len(inputs) == 1:
         return value == inputs[0]
@@ -108,7 +55,7 @@ def try_backwards2(value, inputs):
     return False
 
 @time_wrapper
-def task1_backwards(some_input):
+def task1(some_input):
     data = preprocess(some_input)
     sum_possible = 0
     for value, inputs in data:
@@ -118,7 +65,7 @@ def task1_backwards(some_input):
     return sum_possible
 
 @time_wrapper
-def task2_backwards(some_input):
+def task2(some_input):
     data = preprocess(some_input)
     sum_possible = 0
     for value, inputs in data:
@@ -131,13 +78,9 @@ if __name__ == "__main__":
     print("test")
     print(task1(test_input))
     print(task2(test_input))
-    print(task1_backwards(test_input))
-    print(task2_backwards(test_input))
     print()
 
     print("real")
     print(task1(real_input))
-    # print(task2(real_input)) # --  47.73761252 seconds
-    print(task1_backwards(real_input))
-    print(task2_backwards(real_input))
+    print(task2(real_input))
 
