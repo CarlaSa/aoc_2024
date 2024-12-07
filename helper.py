@@ -1,11 +1,13 @@
-from timeit import default_timer as timer
+from time import perf_counter_ns
 
 
 def time_wrapper(func, space_for_result = 10):
     def wrapper(*args, **kwargs):
-        start = timer()
+        start = perf_counter_ns()
         result = func(*args, **kwargs)
-        end = timer()
-        result_string = f"{func.__name__:10} result: {result:<{space_for_result}} --  {end - start: .8f} seconds      "
+        end = perf_counter_ns()
+        time_elapsed = end - start
+        time_elapsed = time_elapsed / 1e9
+        result_string = f"{func.__name__:10} result: {result:<{space_for_result}} --  {time_elapsed: .8f} seconds      "
         return result_string
     return wrapper
