@@ -1,5 +1,4 @@
-from helper import time_wrapper
-import copy
+from helper import time_wrapper, memoized
 
 test_input = f"""
 ....#.....
@@ -34,7 +33,7 @@ class Maze(object):
         self.values = None
         self.path = None
         self.start_position = None
-        self.temp_obs = []
+        self.temp_obs = list()
 
         if some_input is not None:
             self.init_from_input(some_input)
@@ -48,14 +47,6 @@ class Maze(object):
         self.path = set()
         self.start_position = self.find_current_position()
 
-    #
-    # def clone(self) -> "Maze":
-    #     other = Maze()
-    #     other.values = self.values
-    #     other.height = self.height
-    #     other.width = self.width
-    #     other.path = self.path
-    #     return other
 
     def find_current_position(self):
         for i, row in enumerate(self.values):
@@ -64,11 +55,6 @@ class Maze(object):
                     assert self[i, j] == 2
                     return i, j
 
-    # def __copy__(self):
-    #     return Maze(self.values)
-    #
-    # def __deepcopy__(self, memo):
-    #     return Maze(copy.deepcopy(self.values))
 
     def __repr__(self):
         representation = ""
@@ -93,6 +79,15 @@ class Maze(object):
         self[coord] = 3
         self.path.add(coord)
 
+    def move_me(self, coord):
+        y, x = coord
+
+    def check_field(self, coord):
+        y, x = coord
+        if x < 0 or x >= self.width or y < 0 or y >= self.height:
+            return "oobs"
+        if self[y][x] != 3:
+
     def remove_path(self):
         for coord in self.path:
             self[coord] = 1
@@ -110,6 +105,7 @@ class Maze(object):
             self[coord] = 1
 
 
+
 class Game:
     def __init__(self, some_input=None, maze=None):
         if maze is None:
@@ -122,6 +118,7 @@ class Game:
         self.current_position = self.maze.start_position
         self.current_direction = "n"
         self.state_cache = set()
+        self.next_position_cache = dict()
 
         self.__move_by_direction ={
                 "n": (-1, 0),
@@ -131,7 +128,7 @@ class Game:
                 }
         self.__turn_by_direction ={"n": "e", "e": "s", "s": "w", "w": "n"}
 
-    def restart(self):
+    def restart(self, start_position = None):
         self.maze.reset()
         self.current_position = self.maze.start_position
         self.current_direction = "n"
@@ -141,14 +138,15 @@ class Game:
         self.current_direction = self.__turn_by_direction[self.current_direction]
 
     def next_position(self):
+        hashed = hash(self.current_position) + hash(self.current_direction)
+        if hashed in self.next_position_cache:
+            return self.next_position_cache[hashed]
         move = self.__move_by_direction[self.current_direction]
         next_position = tuple(c + m for (c, m) in zip(self.current_position, move))
+        self.next_position_cache[hashed] = next_position
         return next_position
 
-    def loop(self, verbose=False):
-        if verbose:
-            print(self.maze)
-
+    def loop(self):
         while self.current_position:
 
             state = hash(self.current_position) + hash(self.current_direction)
@@ -158,30 +156,23 @@ class Game:
 
             self.step()
 
-        if verbose:
-            print(self.maze)
-
-
     def find_time_loops(self, ):
         directly_after_start = self.next_position()
         coordinates = set()
-        # path = self.loop(return_path=True)
         self.loop()
         path = self.maze.path
         self.restart()
         for obstacle in path:
             if self.maze[obstacle] == 1 and obstacle != directly_after_start:
-                self.maze[obstacle] = 9
+                self.maze.add_obstacle(obstacle)
                 if self.loop() == "Time_loop":
-                    # new_game = Game(maze = self.maze)
-                    # if new_game.loop() == "Time_loop":
                     coordinates.add(obstacle)
-            # clear everything again
+
             self.restart()
-            self.maze[obstacle] = 1
-            # if len(coordinates) == 20:
-            #     break
+            if len(coordinates) == 100:
+                break
         return len(coordinates)
+
 
     def step(self):
         next_position = self.next_position()
