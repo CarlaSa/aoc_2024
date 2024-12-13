@@ -1,6 +1,9 @@
+from collections import defaultdict
+import random
 from time import perf_counter_ns
 
 import numpy as np
+from pandas.core.computation.ops import isnumeric
 
 
 def time_wrapper(func, space_for_result = 10):
@@ -23,18 +26,39 @@ def memoized(func):
     return wrapper
 
 
+color_codes = {
+    "red": '\033[91m',
+    "green": '\033[92m',
+    "blue": '\033[94m',
+    "yellow": '\033[93m',
+    "cyan": '\033[96m',
+    "magenta": '\033[95m',
+    "purple": '\033[96m',
+}
+
+def rgb_color_code(r,g,b):
+    return f"\033[38;2;{r};{g};{b}m"
+
 def simcmap(string, color):
-    color_codes = {
-            "red": '\033[91m',
-            "green": '\033[92m',
-            "blue": '\033[94m',
-            "yellow": '\033[93m',
-            "cyan": '\033[96m',
-            "magenta": '\033[95m',
-            }
-    CSTART = color_codes[color]
-    CEND = '\033[0m'
-    repr = CSTART + string + CEND
+    if not isinstance(string, str):
+        if isinstance(string, bool) or isinstance(string, np.bool_):
+            string = f"{str(string):6}"
+        elif isnumeric(string):
+            string = f"{string:3}"
+        else:
+            print(type(string))
+            raise NotImplementedError
+
+    if color is not None:
+        if color in color_codes:
+            CSTART = color_codes[color]
+        elif len(color) == 3: # rgb
+            CSTART = rgb_color_code(*color)
+        CEND = '\033[0m'
+        repr = CSTART + string + CEND
+    else:
+        repr = string
+
     return repr
 
 
@@ -47,5 +71,51 @@ def np_repr(arr : np.ndarray) -> str:
     return representation
 
 
-def np_print(arr : np.ndarray) -> str:
+def test_grid():
+    string = ""
+    step = 40
+    for g in range(0, 256, 16):
+        for b in range(0, 256, 16):
+            for r in range(0, 256, 16):
+                string += simcmap("test", (r,g,b))
+                string += " "
+            string += "\n"
+    print(string)
+
+def get_n_colors(n):
+    # doesn't have to be good lol
+    samples = list()
+    for g in range(0, 256, 16):
+        for b in range(0, 256, 16):
+            for r in range(0, 256, 16):
+                samples.append((r,g,b))
+
+    random.shuffle(samples)
+    return samples[:n]
+
+
+def np_repr_unique(arr : np.ndarray) -> str:
+    unique_values = np.unique(arr)
+
+    arr_copy = arr.copy()
+    if arr_copy.dtype != "object":
+        arr_copy = arr_copy.astype("object")
+    if len(unique_values) < len(color_codes):
+        colors = iter(color_codes.keys())
+    else:
+        colors = iter(get_n_colors(len(unique_values)))
+    for val in unique_values:
+        next_color = next(colors, None)
+        colored_value = simcmap(val, next_color)
+        arr_copy[arr_copy == val] = colored_value
+    return np_repr(arr_copy)
+
+def np_color_print(arr : np.ndarray):
+    print(np_repr_unique(arr))
+
+
+def np_print(arr : np.ndarray):
     print(np_repr(arr))
+
+if __name__ == "__main__":
+    test_grid()
