@@ -1,3 +1,4 @@
+import functools
 from collections import defaultdict
 import random
 from time import perf_counter_ns
@@ -17,13 +18,21 @@ def time_wrapper(func, space_for_result = 10):
         return result_string
     return wrapper
 
-def memoized(func):
-    cache = {}
-    def wrapper(*args, **kwargs):
-        if args not in cache:
-            cache[args] = func(*args, **kwargs)
-        return cache[args]
-    return wrapper
+def memoized(keywords):
+    def actual_memoized(func):
+        cache = {}
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            cache_key = (kwargs[key] for key in keywords)
+            if cache_key in cache:
+                return cache[cache_key]
+            else:
+                result = func(*args, **kwargs)
+                cache[cache_key] = result
+                return result
+        return wrapper
+    return actual_memoized
+
 
 
 color_codes = {
