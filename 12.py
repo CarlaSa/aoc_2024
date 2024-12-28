@@ -1,5 +1,7 @@
 from collections import defaultdict
 import numpy as np
+from helper import time_wrapper, np_color_print
+
 
 test_input = f"""
 RRRRIICCFF
@@ -86,7 +88,7 @@ def find_connected_components_alt(neighbors_dict):
         current_label += 1
     return label, current_label -1
 
-
+@time_wrapper
 def task1(some_input):
     some_input = parse_input(some_input)
     neighbors_dict = neighbors(some_input)
@@ -95,12 +97,15 @@ def task1(some_input):
         label: {"area": 0, "perimeter": 0} for label in np.unique(labels)
     }
 
+    # np_color_print(labels)
+
     for (i,j), val in np.ndenumerate(labels):
         cost[val]["area"] += 1
         cost[val]["perimeter"] += 4 - len(neighbors_dict[(i,j)])
 
     return sum(label_cost["area"] * label_cost["perimeter"] for label_cost in cost.values())
 
+@time_wrapper
 def task2(some_input):
     some_input = parse_input(some_input)
     neighbors_dict = neighbors(some_input)
