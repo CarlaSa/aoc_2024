@@ -143,11 +143,10 @@ def decode_binary(values, key="z"):
     return solution
 
 
-def do_operation_literal(input1, input2, operation, output):
-    return f"[{output}]({input1} {operation} {input2})"
-
-
 def get_instructions_of_solution(some_input):
+    """function I used to visualise problem in task 2 and think about it"""
+    def do_operation_literal(input1, input2, operation, output):
+        return f"[{output}]({input1} {operation} {input2})"
     inputs, instructions = preprocess(some_input)
     outstanding = [True] * len(instructions)
 
@@ -193,7 +192,7 @@ def task1(some_input):
 
     return solution
 
-
+@time_wrapper
 def task2(some_input):
     inputs, instructions = preprocess(some_input)
     for i in range(len(instructions)):
@@ -241,10 +240,7 @@ def task2(some_input):
         swaps.append(z_candidate["idx"])
 
     # this gives me 6 outputs, brute force the last swap
-
-    # original_solution = decode_binary(do_connections(inputs, instructions))
     swap_candidates_second_round = []
-    try_swap_history = []
 
     i = 0
     for j1 in range(len(instructions)):
@@ -255,7 +251,6 @@ def task2(some_input):
             try_swap = swaps.copy()
             try_swap.append(instr1["idx"])
             try_swap.append(instr2["idx"])
-            try_swap_history.append(try_swap)
             new_instructions = swap_instructions(instructions, try_swap)
             values = do_connections(inputs, new_instructions)
             if values:
@@ -265,6 +260,9 @@ def task2(some_input):
                     print(try_swap)
                     swap_candidates_second_round.append(try_swap.copy())
                     break
+
+    # this gives me four possible candidates. I generate new x and y to test against different inputs as the true
+    # solution has to do addition for all x and y
 
     possible_idx = [True] * len(swap_candidates_second_round)
     while sum(possible_idx) > 1:
@@ -296,9 +294,9 @@ def task2(some_input):
     for idx in actual_swaps:
         names.append(instructions[idx]["output"])
 
-    password = ",".join(sorted(names))
+    solution_key = ",".join(sorted(names))
 
-    return password
+    return solution_key
 
 
 if __name__ == "__main__":
@@ -306,9 +304,7 @@ if __name__ == "__main__":
     print(task1(test_input))
     print(task1(test_input_2))
 
-    # print(task2(test_input))
-    # print()
-    #
+    print()
     print("real")
     print(task1(real_input))
     print(task2(real_input))
